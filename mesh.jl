@@ -1,5 +1,5 @@
 const network_on = true
-
+const make_plots = false
 const alpha = 0.5
 const dVer = 2
 const meas_var = 16
@@ -77,7 +77,6 @@ for t = 2:T
         d_x = ones_U*reshape(truePos[1,t,:],1,U)
         d_y = ones_U*reshape(truePos[2,t,:],1,U)
         d_u = sqrt((d_x - d_x').^2 + (d_y - d_y').^2)
-        d_u = d_u
         z_ou = C_bt_UU - 20*log10(d_u) - alpha*d_u + sqrt(meas_var)*randn(U,U)
     end
         
@@ -85,30 +84,34 @@ for t = 2:T
 
         # Weighting:
             
-        d_x = ((ones_N*beaconPositions[1,:])' - ones_aps*x[1,:,u]).^2
-        d_y = ((ones_N*beaconPositions[2,:])' - ones_aps*x[2,:,u]).^2
-        d_p = sqrt(dVer^2 + d_x + d_y)
+        d_x2 = ((ones_N*beaconPositions[1,:])' - ones_aps*x[1,:,u]).^2
+        d_y2 = ((ones_N*beaconPositions[2,:])' - ones_aps*x[2,:,u]).^2
+        d_p = sqrt(dVer^2 + d_x2 + d_y2)
             
-        pObs_2 = C_2_N - 20*log10(d_p) - alpha*d_p + sqrt(meas_var)*randn(nbr_aps,N)
-        pObs_5 = C_2_N - 20*log10(d_p) - alpha*d_p + sqrt(meas_var)*randn(nbr_aps,N)
+	# Should not have Gaussian noise term here.
+        pObs_2 = C_2_N - 20*log10(d_p) - alpha*d_p
+        pObs_5 = C_2_N - 20*log10(d_p) - alpha*d_p
             
         lnw = - (z_2[:,u]*ones_N' - pObs_2).^2/(2*meas_var) - (z_5[:,u]*ones_N' - pObs_5).^2/(2*meas_var)
 
         if network_on
             # Between users:
-            d_x = (ones_N*squeeze(truePos[1,t-1,:],1) - x[1,:,u]'*ones(1,U)).^2
-            d_y = (ones_N*squeeze(truePos[2,t-1,:],1) - x[2,:,u]'*ones(1,U)).^2
-            d_u_p = sqrt(d_x + d_y)
+            d_x2 = (ones_N*squeeze(truePos[1,t-1,:],1) - x[1,:,u]'*ones(1,U)).^2
+            d_y2 = (ones_N*squeeze(truePos[2,t-1,:],1) - x[2,:,u]'*ones(1,U)).^2
+            d_u_p = sqrt(d_x2 + d_y2)
             
             pObs = C_bt_NU - 20*log10(d_u_p) - alpha*d_u_p
             luw = -(ones_N*z_ou[u,:] - pObs).^2/(2*meas_var)
+            luw[:,u] = 0.0
+            w = sum(lnw,1) + sum(luw,2)'
+	else
+	    w = sum(lnw,1)
         end
-        luw[:,u] = 0.0
-        w = sum(lnw,1) + sum(luw,2)'
         w = w - minimum(w)   
         w = exp(w)
         w = w./sum(w)
         csum = squeeze(cumsum(w,2),1)
+	# Resampling:
         for i = 1:N
             temp = searchsortedfirst(csum, rand())
             x_next[:,i] = x[:,temp,u]
@@ -129,29 +132,38 @@ println(meanError)
 print("Maximum error = ")
 println(maxError)
 
-using PyPlot
-#using Winston
+#print("x_est = ")
+#println(x_est)
 
-PyPlot.figure()
-PyPlot.plt.plot(beaconPositions[1,:],beaconPositions[2,:],"c^")
-hold(true)
-for u = 1:U
-    if u < U/2
-        PyPlot.plt.plot(truePos[1,:,u], truePos[2,:,u], "b-")
-    else
-        PyPlot.plt.plot(truePos[1,:,u], truePos[2,:,u], "b+")
-    end
-    PyPlot.plt.plot(x_est[1,:,u], x_est[2,:,u], "r-")
+#print("truePos = ")
+#println(truePos)
+
+
+if make_plots
+	using PyPlot
+	#using Winston
+
+	PyPlot.figure()
+	PyPlot.plt.plot(beaconPositions[1,:],beaconPositions[2,:],"c^")
+	hold(true)
+	for u = 1:U
+	    if u < U/2
+		PyPlot.plt.plot(truePos[1,:,u], truePos[2,:,u], "b-")
+	    else
+		PyPlot.plt.plot(truePos[1,:,u], truePos[2,:,u], "b+")
+	    end
+	    PyPlot.plt.plot(x_est[1,:,u], x_est[2,:,u], "r-")
+	end
+	xlim(-10, 150)
+	ylim(-10, 60)
+	savefig("figure1.eps")
+
+	PyPlot.figure()
+	PyPlot.plt.plot(beaconPositions[1,:],beaconPositions[2,:],"g^")
+	hold(true)
+	PyPlot.plt.plot(truePos[1,:,1], truePos[2,:,1],"b-")
+	PyPlot.plt.plot(x_est[1,:,1], x_est[2,:,1], "r-")
+	xlim(-10, 150)
+	ylim(-10, 60)
+	savefig("figure2.eps")
 end
-xlim(-10, 150)
-ylim(-10, 60)
-savefig("figure1.eps")
-
-PyPlot.figure()
-PyPlot.plt.plot(beaconPositions[1,:],beaconPositions[2,:],"g^")
-hold(true)
-PyPlot.plt.plot(truePos[1,:,1], truePos[2,:,1],"b-")
-PyPlot.plt.plot(x_est[1,:,1], x_est[2,:,1], "r-")
-xlim(-10, 150)
-ylim(-10, 60)
-savefig("figure2.eps")

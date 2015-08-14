@@ -5,14 +5,15 @@ clc
 alpha = 0.5;
 dVer = 2;
 meas_var = 16;
+user_var = 25;
 walk_var = 4;
 U = 100;
-network_on = 1;
+network_on = true;
 
 
 % xstart = 108;
 % ystart = 10;
-xstart = rand(1,U)*100 + 10;
+xstart = rand(1,U)*100 + 20;
 ystart = rand(1,U)*40 + 5;
 
 C = -[30 29 30 29 33 30 30 29 33 30 33 30 30 29 33 30 33 30 30 29 ...
@@ -140,7 +141,7 @@ for t = 2:T
                 for ou = 1:U-1
                     if d_u(ou) < 15
                         pObs = C_bt - 20*log10(d_u_p(ou)) - alpha*d_u_p(ou);
-                        lnw = lnw -(z_ou(ou) - pObs)^2/(2*meas_var);
+                        lnw = lnw -(z_ou(ou) - pObs)^2/(2*user_var);
                     end
                 end
             end
