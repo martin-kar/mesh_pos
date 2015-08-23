@@ -3,7 +3,7 @@ close
 
 
 network_on = true
-
+make_plots = false
 
 
 
@@ -20,8 +20,7 @@ U = 100
 xstart = rand(1,U)*100 + 20
 ystart = rand(1,U)*40 + 5
 
-C = -[30 29 30 29 33 30 30 29 33 30 33 30 30 29 33 30 33 30 30 29
-    30 29 33 30 33 30 30 29 33 30 33 30 30 29 30 29 30 29 30 29]
+C = -[30 29 30 29 33 30 30 29 33 30 33 30 30 29 33 30 33 30 30 29 30 29 33 30 33 30 30 29 33 30 33 30 30 29 30 29 30 29 30 29]
 C_bt = -30
 
 T = 10; #time steps
@@ -36,7 +35,7 @@ nbr_aps = size(beaconPositions, 2)
 #
 w = zeros(1,N)
 
-x = zeros(2, N, U); #Particle states
+x = zeros(2, N, U) #Particle states
 x = x + sqrt(walk_var) * randn(size(x))
 
 
@@ -99,7 +98,7 @@ for t = 2:T
             end
         end
 	###################################
-        
+            
 
         for i = 1:N
 
@@ -111,19 +110,20 @@ for t = 2:T
 
                 # 5 GHz:
                 pObs = C[2*k-1] - 20*log10(d_p[k]) - alpha*d_p[k]       
-                if z[1,k] < -80
-                    z[1,k] = pObs
-                end
+               # if z[1,k] < -80
+               #     z[1,k] = pObs
+               # end
                 lnw = lnw -(z[1,k] - pObs)^2/(2*meas_var)
 
 
                 # 2.4 GHz:
                 pObs = C[2*k] - 20*log10(d_p[k]) - alpha*d_p[k]    
-                if z[2,k] < -80
-                    z[2,k] = pObs; 
-                end
+                #if z[2,k] < -80
+               #     z[2,k] = pObs; 
+                #end
                 lnw = lnw -(z[2,k] - pObs)^2/(2*meas_var)
             end
+######################### SAME AS OTHER VERSION THIS FAR
             ###################
             if network_on
                 # Between users:
@@ -136,10 +136,10 @@ for t = 2:T
                 end
                 
                 for ou = 1:U-1
-                    if d_u[ou] < 15
+           #         if d_u[ou] < 15
                         pObs = C_bt - 20*log10(d_u_p[ou]) - alpha*d_u_p[ou]
                         lnw = lnw -(z_ou[ou] - pObs)^2/(2*meas_var)
-                    end
+            #        end
                 end
             end
            #####################
@@ -177,33 +177,35 @@ println(meanError)
 print("Maximum error = ")
 println(maxError)
 
-#using PyPlot
-using Winston
 
-figure()
-plot(beaconPositions[1,:],beaconPositions[2,:],"c^")
-hold(true)
-for u = 1:U
-    if u < U/2
-    	plot(truePos[1,:,u], truePos[2,:,u], "b-")
-    else
-    	plot(truePos[1,:,u], truePos[2,:,u], "b+")
-    end
-    plot(x_est[1,:,u], x_est[2,:,u], "r-")
+if make_plots
+	#using PyPlot
+	using Winston
+
+	figure()
+	plot(beaconPositions[1,:],beaconPositions[2,:],"c^")
+	hold(true)
+	for u = 1:U
+	    if u < U/2
+	    	plot(truePos[1,:,u], truePos[2,:,u], "b-")
+	    else
+	    	plot(truePos[1,:,u], truePos[2,:,u], "b+")
+	    end
+	    plot(x_est[1,:,u], x_est[2,:,u], "r-")
+	end
+	xlim(-10, 150)
+	ylim(-10, 60)
+	savefig("figure1.eps")
+
+	figure()
+	plot(beaconPositions[1,:],beaconPositions[2,:],"g^")
+	hold(true)
+	plot(truePos[1,:,1], truePos[2,:,1],"b-")
+	plot(x_est[1,:,1], x_est[2,:,1], "r-")
+	xlim(-10, 150)
+	ylim(-10, 60)
+	savefig("figure2.eps")
 end
-xlim(-10, 150)
-ylim(-10, 60)
-savefig("figure1.eps")
-
-figure()
-plot(beaconPositions[1,:],beaconPositions[2,:],"g^")
-hold(true)
-plot(truePos[1,:,1], truePos[2,:,1],"b-")
-plot(x_est[1,:,1], x_est[2,:,1], "r-")
-xlim(-10, 150)
-ylim(-10, 60)
-savefig("figure2.eps")
-
 
 
 

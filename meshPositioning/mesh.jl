@@ -1,3 +1,6 @@
+# note: should remove ble and wifi signals that come from too far.
+
+
 const network_on = true
 const make_plots = false
 const alpha = 0.5
@@ -11,9 +14,11 @@ xstart = rand(1,U)*100 + 20
 ystart = rand(1,U)*40 + 5
 
 C = -[30 29 30 29 33 30 30 29 33 30 33 30 30 29 33 30 33 30 30 29 30 29 33 30 33 30 30 29 33 30 33 30 30 29 30 29 30 29 30 29]
+
 C_2 = -[30,30,33,30,33,33,30,33,33,30,30,33,33,30,33,33,30,30,30,30]
 C_2 = reshape(C_2, 1, length(C_2))
 C_5 = -[29,29,30,29,30,30,29,30,30,29,29,30,30,29,30,30,29,29,29,29]
+
 C_5 = reshape(C_5, 1, length(C_5))
 
 const C_bt = -30
@@ -62,7 +67,7 @@ const C_2_N = C_2'*ones_N'
 const C_5_N = C_5'*ones_N'
 const C_bt_UU = C_bt*ones_UU
 const C_bt_NU = C_bt*ones(N,U);
-
+pObs = zeros(size(C_bt_NU))
 #
 tic()
 for t = 2:T
@@ -79,7 +84,7 @@ for t = 2:T
         d_u = sqrt((d_x - d_x').^2 + (d_y - d_y').^2)
         z_ou = C_bt_UU - 20*log10(d_u) - alpha*d_u + sqrt(meas_var)*randn(U,U)
     end
-        
+    
     for u = 1:U
 
         # Weighting:
@@ -87,13 +92,13 @@ for t = 2:T
         d_x2 = ((ones_N*beaconPositions[1,:])' - ones_aps*x[1,:,u]).^2
         d_y2 = ((ones_N*beaconPositions[2,:])' - ones_aps*x[2,:,u]).^2
         d_p = sqrt(dVer^2 + d_x2 + d_y2)
-            
+
 	# Should not have Gaussian noise term here.
         pObs_2 = C_2_N - 20*log10(d_p) - alpha*d_p
-        pObs_5 = C_2_N - 20*log10(d_p) - alpha*d_p
+        pObs_5 = C_5_N - 20*log10(d_p) - alpha*d_p
             
         lnw = - (z_2[:,u]*ones_N' - pObs_2).^2/(2*meas_var) - (z_5[:,u]*ones_N' - pObs_5).^2/(2*meas_var)
-
+            ######################### SAME AS OTHER VERSION THIS FAR
         if network_on
             # Between users:
             d_x2 = (ones_N*squeeze(truePos[1,t-1,:],1) - x[1,:,u]'*ones(1,U)).^2
@@ -139,7 +144,9 @@ println(maxError)
 #println(truePos)
 
 
-if make_plots
+
+
+#=if make_plots
 	using PyPlot
 	#using Winston
 
@@ -166,4 +173,4 @@ if make_plots
 	xlim(-10, 150)
 	ylim(-10, 60)
 	savefig("figure2.eps")
-end
+end=#
