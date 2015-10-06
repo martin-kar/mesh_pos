@@ -8,7 +8,7 @@ meas_var = 16;
 user_var = 25;
 walk_var = 4;
 U = 100;
-network_on = false;
+network_on = true;
 
 
 % xstart = 108;
