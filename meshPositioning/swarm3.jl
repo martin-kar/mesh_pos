@@ -65,7 +65,8 @@ end
 
 for u = 1:U
     for t = 2:T
-        truePos[:,t,u] = truePos[:,t-1,u] + sqrt(walk_var)/sqrt(2) + .5*randn(2,1)
+        #truePos[:,t,u] = truePos[:,t-1,u] + sqrt(walk_var)/sqrt(2) + .5*randn(2,1)
+	truePos[:,t,u] = truePos[:,t-1,u] + sqrt(walk_var)*randn(2,1) #Ugly, square form.
     end
 end
 
@@ -164,8 +165,9 @@ for t = 2:T
         
 
         # State update:
-        x[:,:,u] = x[:,:,u] + sqrt(walk_var)/sqrt(2) +  .5*randn(size(x[:,:,u]))
-	x_rec[:,:,u] = x_rec[:,:,u] + sqrt(walk_var)/sqrt(2) +  .5*randn(size(x_rec[:,:,u]))
+        #x[:,:,u] = x[:,:,u] + sqrt(walk_var)/sqrt(2) +  .5*randn(size(x[:,:,u]))
+	#x_rec[:,:,u] = x_rec[:,:,u] + sqrt(walk_var)/sqrt(2) +  .5*randn(size(x_rec[:,:,u]))
+	
     end
 	
 
@@ -190,7 +192,7 @@ for t = 2:T
 						receiver_pos = [x_rec[1,i,u], x_rec[2,i,u]]
 
 						bt_rri_var, bt_rri_mu = unscented(pos_var, pos_mu, receiver_pos, C_bt, alpha)
-						#bt_rri_var, bt_rri_mu = unscented(pos_var, truePos[:,t,ou], receiver_pos, C_bt, alpha)
+						#bt_rri_var, bt_rri_mu = unscented(0.001*pos_var, truePos[:,t,ou], receiver_pos, C_bt, alpha)
 
 
 						lnw_rec = lnw_rec -(z_ou[ou] - bt_rri_mu)^2/(2*(bt_rri_var + meas_var))
@@ -198,7 +200,7 @@ for t = 2:T
 				    end
 
 				end
-			
+		
 				
 				w_rec[i] = lnw_rec
 			end
@@ -219,7 +221,9 @@ for t = 2:T
 
 			x_est_rec[:,t,u] = mean(x_next_rec,2)
 			x_rec[:,:,u] = x_next_rec
-			x_rec[:,:,u] = x_rec[:,:,u] +  .5*randn(size(x_rec[:,:,u]))
+			x[:,:,u] = x[:,:,u] + sqrt(walk_var)*randn(size(x[:,:,u]))
+			x_rec[:,:,u] = x_rec[:,:,u] + sqrt(walk_var)*randn(size(x_rec[:,:,u]))
+			#x_rec[:,:,u] = x_rec[:,:,u] +  .5*randn(size(x_rec[:,:,u]))
 		end
 
 	end
@@ -236,15 +240,15 @@ meanError = mean(mean(mean(abs(truePos-x_est))))
 maxError = maximum(maximum(maximum(abs(truePos-x_est))))
 print("Average error= ")
 println(meanError)
-print("Maximum error= ")
-println(maxError)
+#print("Maximum error= ")
+#println(maxError)
 
 meanError = mean(mean(mean(abs(truePos-x_est_rec))))
 maxError = maximum(maximum(maximum(abs(truePos-x_est_rec))))
 print("Average error rec= ")
 println(meanError)
-print("Maximum error rec= ")
-println(maxError)
+#print("Maximum error rec= ")
+#println(maxError)
 
 
 #using Winston
